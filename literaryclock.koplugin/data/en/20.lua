@@ -260,7 +260,6 @@ return {
 },
 ["20:57"]={
 {"She points up at Watch that says 08:57, that’s \003only three minutes before nine\004. So I run into Wardrobe and lie down on my pillow and wrap up in Blanket that’s all grey and fleecy with the red piping.","Room","Emma Donoghue",true},
-{"Wait, he said solemnly, “till the clock strikes. I have wealth and power and knowledge above most men, but when the clock strikes I am afraid. Stay by me until then. This woman shall be yours. You have the word of the hereditary Prince of Valleluna. On the day of your marriage I will give you $100,000 and a palace on the Hudson. But there must be no clocks in that palace—they measure our follies and limit our pleasures. Do you agree to that?”\n“Of course,” said the young man, cheerfully, “they’re a nuisance, anyway—always ticking and striking and getting you late for dinner.” He glanced again at the clock in the tower. The hands stood at \003three minutes to nine\004.","The Four Million","O. Henry",true},
 },
 ["20:58"]={
 {"What time is it? she asked, quiet, definite, hopeless.\n“\003Two minutes to nine\004,” he replied, telling the truth with a struggle.","Sons and Lovers","D.H. Lawrence",true},

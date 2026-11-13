@@ -38,7 +38,7 @@ function Clock.build(o)
         p.quote, p.title, p.author = q[1], q[2], q[3]
         p.show_attribution = show_attr
     else
-        -- A minute the dataset does not cover (29 a day with the
+        -- A minute the dataset does not cover (31 a day with the
         -- safe-for-work filter on): a line from core/fallbacks.lua.
         local text, attribution = Core.Filler.pick(now)
         p.quote = text

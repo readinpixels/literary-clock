@@ -103,10 +103,25 @@ def lua_str(s):
     return "".join(out)
 
 
+# Quotes longer than Q3 + OUTLIER_K * IQR (in characters) are dropped:
+# Tukey's fence for extreme outliers. They would only fit a card at a tiny
+# font size. With the en-US data the fence is 617 characters and 9 quotes go.
+OUTLIER_K = 3.0
+
+
+def plain_length(text):
+    return len(re.sub(r"[\x01-\x04]", "", text))
+
+
+def quartile(sorted_values, p):
+    return sorted_values[int(p * (len(sorted_values) - 1))]
+
+
 def main(src, dst):
     by_hour = {}
     missing = 0
     total = 0
+    rows = []
     with open(src, encoding="utf-8", newline="") as f:
         reader = csv.reader(f, delimiter="|", quoting=csv.QUOTE_NONE)
         header = next(reader)
@@ -120,9 +135,19 @@ def main(src, dst):
             text, found = encode(normalise(parse_markup(quote)), phrase)
             if not found:
                 missing += 1
-            total += 1
-            by_hour.setdefault(time[:2], {}).setdefault(time, []).append(
-                (text, title.strip(), author.strip(), sfw.strip().lower() == "true"))
+            rows.append((time, text, title.strip(), author.strip(),
+                         sfw.strip().lower() == "true"))
+
+    lengths = sorted(plain_length(r[1]) for r in rows)
+    q1, q3 = quartile(lengths, 0.25), quartile(lengths, 0.75)
+    fence = q3 + OUTLIER_K * (q3 - q1)
+    dropped = [r for r in rows if plain_length(r[1]) > fence]
+    for time, text, title, author, sfw in rows:
+        if plain_length(text) > fence:
+            continue
+        total += 1
+        by_hour.setdefault(time[:2], {}).setdefault(time, []).append(
+            (text, title, author, sfw))
 
     os.makedirs(dst, exist_ok=True)
     for hour in ("%02d" % h for h in range(24)):
@@ -139,7 +164,11 @@ def main(src, dst):
         lines.append("}")
         with open(os.path.join(dst, hour + ".lua"), "w", encoding="utf-8") as out:
             out.write("\n".join(lines) + "\n")
-    print("%d quotes, %d without a located time phrase" % (total, missing))
+    print("%d quotes kept, %d without a located time phrase" % (total, missing))
+    print("dropped %d quotes longer than %d characters (Q3 %d + %.1f x IQR %d):"
+          % (len(dropped), fence, q3, OUTLIER_K, q3 - q1))
+    for time, text, title, author, _sfw in dropped:
+        print("  %s  %4d  %s, %s" % (time, plain_length(text), title, author))
 
 
 if __name__ == "__main__":

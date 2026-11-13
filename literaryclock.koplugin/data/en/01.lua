@@ -153,9 +153,6 @@ return {
 ["01:35"]={
 {"Two days later, the chime of his diary woke Merral in the middle of the night. He shook himself and peered at the clock on the diary screen.\n\003One thirty-five\004. An extraordinary time for a message. Has the ship been sighted?","The Dark Foundations","Chris Walley",true},
 },
-["01:36"]={
-{"On the north-east side of the street, about midway between the fish and flesh markets in the seaport town of Falmouth, and about the silent and solemn hour of \003thirty-six minutes past one\004 by my father’s watch, on the morning of the 28th day of December, His Gracious Majesty George the Second being King of Great Britain and Ireland, (it is necessary in important matters to be particular). I was introduced with the usual forms and ceremonies into the ancient family of the Hurrys, as the undoubted child of my father Richard and my mother Joan, the ninth, and as it subsequently proved, the last of their promising offspring.","Hurricane Hurry","W.H.G. Kingston",true},
-},
 ["01:37"]={
 {"Major Yun appeared at General Castleton’s elbow, and handed an interface to the base leader. General Castleton took it, his face darkening and his frown deepening as he read it.\n“What is it?” she asked when he looked up. “At \00301:37\004 this morning, an encrypted message was sent from inside the base.”","Outcasts","Gail Delaney",true},
 },

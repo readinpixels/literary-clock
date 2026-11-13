@@ -48,7 +48,6 @@ return {
 {"Gates glanced at his clock on the nightstand. It was \00311:05\004. “Trey and his friends have probably been done talking about tropical fish for about a half hour. But he’s used to me coming home late.” She smiled. “So, no rush.”","Murderer’s Row","Ray Keating",true},
 {"\003Five past eleven\004; less than a quarter of an hour before Amethyst either succeeded or failed","The Infinite Day","Chris Walley",true},
 {"It was \00311:05\004, five minutes later than my habitual bedtime. I felt. I felt guilty at being still up, but the past kept pricking at me and I knew that all the events of those nineteen days in July were astir within me, like the loosening phlegm in an attack of bronchitis","The Go-Between","L. P. Hartley",true},
-{"It was \003five minutes past eleven\004 when I made my last entry. I remember winding up my watch and noting the time. So I have wasted some five hours of the little span still left to us. Who would have believed it possible? But I feel very much fresher, and ready for my fate—or try to persuade myself that I am. And yet, the fitter a man is, and the higher his tide of life, the more must he shrink from death. How wise and how merciful is that provision of nature by which his earthly anchor is usually loosened by many little imperceptible tugs, until his consciousness has drifted out of its untenable earthly harbor into the great sea beyond!","The Poison Belt","Sir Arthur Conan Doyle",true},
 {"My watch says \00311:05\004. But whether AM or PM I don’t know.","Household Worms","Stanley Donwood",true},
 },
 ["23:06"]={

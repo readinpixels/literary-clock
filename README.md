@@ -39,7 +39,7 @@ restart KOReader.
 Long-press the card (Bookshelf) or open the module's settings (SimpleUI):
 
 - **Safe for work quotes only** (on by default): skips the quotes the dataset
-  marks as not safe for work. With it on, 29 minutes of the day have no quote
+  marks as not safe for work. With it on, 31 minutes of the day have no quote
   (see below).
 - **Show title and author**.
 
@@ -72,6 +72,9 @@ alternation between the two kinds, no line twice in a row.
 
 The quotes come from the English collection of
 [cdmoro/literature-clock](https://github.com/cdmoro/literature-clock).
+The build drops only the extreme outliers in length (longer than Q3 + 3 × IQR,
+617 characters with the current data: 9 quotes), which would only fit a card
+at a tiny font size.
 To regenerate the data files:
 
 ```sh
