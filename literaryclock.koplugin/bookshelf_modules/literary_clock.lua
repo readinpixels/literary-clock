@@ -37,6 +37,21 @@ local function showSettings(ctx)
             end,
         }
     end
+    local function changed()
+        if ctx and ctx.refresh then pcall(ctx.refresh) end
+        Kit.settingsReopen(ctx, dialog, showSettings)
+    end
+    local function modeRow(label, mode)
+        return Kit.radioRow{
+            label = label, active = (Settings.get("font_mode") == "fixed") == (mode == "fixed"),
+            on_pick = function()
+                Settings.set("font_mode", mode)
+                changed()
+            end,
+        }
+    end
+    local fixed_label = string.format(_("Font size: fixed (%d)"),
+        tonumber(Settings.get("font_size")) or Settings.FONT_SIZE_DEFAULT)
     local spec = {
         title        = _("Literary Clock"),
         title_align  = "center",
@@ -44,6 +59,19 @@ local function showSettings(ctx)
         buttons      = {
             { toggleRow(_("Safe for work quotes only"), "sfw_only") },
             { toggleRow(_("Show title and author"), "show_attribution") },
+            { modeRow(_("Font size: adaptive"), "adaptive") },
+            { modeRow(fixed_label, "fixed") },
+            { {
+                text = _("Change fixed size…"),
+                callback = function()
+                    UIManager:close(dialog)
+                    core().SettingsUI.showFontSizeSpinner(function()
+                        if ctx and ctx.refresh then pcall(ctx.refresh) end
+                        if ctx and ctx.menu and ctx.menu._reload then ctx.menu:_reload() end
+                        showSettings(ctx)
+                    end)
+                end,
+            } },
         },
     }
     if Kit.withClose then spec = Kit.withClose(spec) end

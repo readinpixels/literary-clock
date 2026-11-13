@@ -15,7 +15,7 @@ return function(plugin_dir)
     local Core = package.loaded[KEY]
     if Core then return Core end
     Core = { dir = plugin_dir }
-    for _i, name in ipairs({ "Settings", "Lookup", "TimeWords", "Filler", "Layout", "Clock" }) do
+    for _i, name in ipairs({ "Settings", "Lookup", "TimeWords", "Filler", "Layout", "Clock", "SettingsUI" }) do
         local chunk = assert(loadfile(plugin_dir .. "/core/" .. name:lower() .. ".lua"))
         Core[name] = chunk(Core)
     end

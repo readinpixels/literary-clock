@@ -15,6 +15,16 @@ local Clock = {}
 -- over a shorter one for the same minute (default: o.min_size).
 -- o.now: time to show (default: now).
 function Clock.build(o)
+    -- Fixed font size: one size everywhere, whatever the card. A quote is
+    -- still chosen to fit at that size when the minute has one that does;
+    -- otherwise the shortest is cut with an ellipsis.
+    local fixed = Settings.fixedFontSize()
+    if fixed then
+        local f = {}
+        for k, v in pairs(o) do f[k] = v end
+        f.size, f.min_size, f.max_size, f.legible = fixed, fixed, fixed, fixed
+        o = f
+    end
     local now = o.now or os.time()
     local target = o.height or o.max_height
     local legible = o.legible or o.min_size or 10

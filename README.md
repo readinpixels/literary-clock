@@ -17,7 +17,8 @@ it, as a module for the home screens of
   and the title and author underneath.
 - When a minute has several quotes, it picks one that is readable in the
   card, and the choice changes from day to day.
-- The quote fills the card at the largest font size that fits.
+- The quote fills the card at the largest font size that fits, or uses a
+  fixed size if you prefer.
 - Works offline: the quotes ship with the plugin.
 
 The clock updates only while the home screen is on. When the e-reader goes
@@ -42,6 +43,10 @@ Long-press the card (Bookshelf) or open the module's settings (SimpleUI):
   marks as not safe for work. With it on, 31 minutes of the day have no quote
   (see below).
 - **Show title and author**.
+- **Font size**: *adaptive* (default) fills the card at the largest size that
+  fits; *fixed* uses the same size on every card (16 by default, from 8 to
+  48). With a fixed size, a quote too long for the card is cut short with an
+  ellipsis: pick a large size at your own risk.
 
 The settings are shared: a change on one home screen applies to the other.
 

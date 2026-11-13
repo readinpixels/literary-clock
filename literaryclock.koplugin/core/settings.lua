@@ -7,12 +7,20 @@ change made from Bookshelf shows on SimpleUI too and the other way round.
 
 local KEY = "literary_clock"
 
+local Settings = {}
+
+-- Fixed font size: default and the range offered. Sizes are KOReader font
+-- sizes (scaled to the screen's DPI by KOReader, like every other text).
+Settings.FONT_SIZE_DEFAULT = 16
+Settings.FONT_SIZE_MIN = 8
+Settings.FONT_SIZE_MAX = 48
+
 local DEFAULTS = {
     sfw_only = true,          -- skip quotes the dataset marks as not safe for work
     show_attribution = true,  -- title and author under the quote
+    font_mode = "adaptive",   -- "adaptive": largest size that fills the card; "fixed": font_size
+    font_size = Settings.FONT_SIZE_DEFAULT,
 }
-
-local Settings = {}
 
 local function all()
     local t = G_reader_settings and G_reader_settings:readSetting(KEY)
@@ -35,6 +43,13 @@ end
 
 function Settings.toggle(name)
     Settings.set(name, not Settings.get(name))
+end
+
+--- The fixed font size when "fixed" is on, else nil.
+function Settings.fixedFontSize()
+    if Settings.get("font_mode") ~= "fixed" then return nil end
+    local s = tonumber(Settings.get("font_size")) or Settings.FONT_SIZE_DEFAULT
+    return math.max(Settings.FONT_SIZE_MIN, math.min(Settings.FONT_SIZE_MAX, math.floor(s)))
 end
 
 return Settings
