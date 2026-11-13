@@ -1,0 +1,38 @@
+# Publishes a GitHub release when a version tag is pushed (e.g. v0.1.0).
+# The release carries a zip with only the literaryclock.koplugin/ folder,
+# the layout KOReader plugin stores (Storefront, App Store) install from.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the tag matches _meta.lua
+        run: |
+          meta=$(sed -n 's/.*version *= *"\([^"]*\)".*/\1/p' literaryclock.koplugin/_meta.lua)
+          if [ "v$meta" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match _meta.lua version $meta"
+            exit 1
+          fi
+
+      - name: Build the zip
+        run: zip -r "literaryclock.koplugin-$GITHUB_REF_NAME.zip" literaryclock.koplugin
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "literaryclock.koplugin-$GITHUB_REF_NAME.zip" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
