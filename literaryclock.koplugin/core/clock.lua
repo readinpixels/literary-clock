@@ -8,14 +8,6 @@ local Layout, Lookup, Settings = Core.Layout, Core.Lookup, Core.Settings
 
 local Clock = {}
 
-local function timeString(now)
-    local twelve = G_reader_settings and G_reader_settings:isTrue("twelve_hour_clock")
-    if twelve then
-        return (os.date("%I:%M %p", now):gsub("^0", ""))
-    end
-    return os.date("%H:%M", now)
-end
-
 --- Builds the clock widget.
 -- o.width, o.height, o.max_height, o.size, o.min_size, o.max_size and the
 -- colours are passed to Layout.build (see there).
@@ -46,10 +38,12 @@ function Clock.build(o)
         p.quote, p.title, p.author = q[1], q[2], q[3]
         p.show_attribution = show_attr
     else
-        -- A minute the dataset does not cover (rare: a handful with the
-        -- safe-for-work filter on). Say the time plainly.
-        p.quote = "It is \3" .. timeString(now) .. "\4."
-        p.show_attribution = false
+        -- A minute the dataset does not cover (29 a day with the
+        -- safe-for-work filter on): a line from core/fallbacks.lua.
+        local text, attribution = Core.Filler.pick(now)
+        p.quote = text
+        p.title, p.author = "", attribution
+        p.show_attribution = show_attr and attribution ~= ""
     end
     return Layout.build(p)
 end

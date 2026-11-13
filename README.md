@@ -40,10 +40,33 @@ Long-press the card (Bookshelf) or open the module's settings (SimpleUI):
 
 - **Safe for work quotes only** (on by default): skips the quotes the dataset
   marks as not safe for work. With it on, 29 minutes of the day have no quote
-  and the card just says the time.
+  (see below).
 - **Show title and author**.
 
 The settings are shared: a change on one home screen applies to the other.
+
+## Minutes without a quote
+
+When a minute has no quote, the card shows a line written like one, with the
+time in words ("twenty-seven minutes to ten", "a quarter past eleven"),
+highlighted like a real quote's time. Two kinds of line take turns: a
+narrator for whom nothing happened at that time, and an invitation to the
+reader to make the minute theirs.
+
+The lines are in
+[`literaryclock.koplugin/core/fallbacks.lua`](literaryclock.koplugin/core/fallbacks.lua):
+edit or add lines there without touching the code. The same file sets an
+optional attribution line, empty by default.
+
+## Tests
+
+```sh
+luajit tests/test_fallbacks.lua
+```
+
+Checks the time in words for every minute of the day, and every fallback
+line with every form: capital first letter, the time highlighted once,
+alternation between the two kinds, no line twice in a row.
 
 ## Rebuilding the quotes
 
