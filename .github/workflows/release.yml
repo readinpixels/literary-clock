@@ -1,15 +1,25 @@
-# Publishes a GitHub release when a version tag is pushed (e.g. v0.1.0).
-# The release carries a zip with only the literaryclock.koplugin/ folder,
-# the layout KOReader plugin stores (Storefront, App Store) install from.
+# Attaches the plugin zip to the release of a version tag (e.g. v0.1.0).
+# The zip holds only the literaryclock.koplugin/ folder, the layout KOReader
+# plugin stores (Storefront, App Store) install from.
+#
+# Works both ways: push a tag and the release is created; or create the
+# release on GitHub (with a new tag) and the zip is added to it.
 name: Release
 
 on:
   push:
     tags:
       - "v*"
+  release:
+    types: [published]
 
 permissions:
   contents: write
+
+# Creating a release on GitHub can fire both events: run them one after the
+# other, so the second finds the release and only refreshes the zip.
+concurrency:
+  group: release-${{ github.ref_name }}
 
 jobs:
   release:
@@ -28,11 +38,14 @@ jobs:
       - name: Build the zip
         run: zip -r "literaryclock.koplugin-$GITHUB_REF_NAME.zip" literaryclock.koplugin
 
-      - name: Create the release
+      - name: Create the release or add the zip to it
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            "literaryclock.koplugin-$GITHUB_REF_NAME.zip" \
-            --title "$GITHUB_REF_NAME" \
-            --generate-notes
+          zip="literaryclock.koplugin-$GITHUB_REF_NAME.zip"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$zip" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$zip" \
+              --title "$GITHUB_REF_NAME" --generate-notes
+          fi
