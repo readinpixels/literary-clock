@@ -9,7 +9,9 @@ it, as a module for the home screens of
 >
 > *West of Hell's Fringe*, Glenn Shirley
 
-> **Work in progress.** Not tested on a device yet.
+> **Pre-release.** Tested on a Kobo Clara BW with Bookshelf and SimpleUI.
+> If something looks off on your device, please open an issue with your
+> e-reader model and a photo.
 
 ## How it works
 
