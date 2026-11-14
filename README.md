@@ -47,6 +47,18 @@ Long-press the card (Bookshelf) or open the module's settings (SimpleUI):
   fits; *fixed* uses the same size on every card (16 by default, from 8 to
   48). With a fixed size, a quote too long for the card is cut short with an
   ellipsis: pick a large size at your own risk.
+- **Font**: Noto Serif by default, or any font installed in KOReader,
+  including the ones you add to its fonts folder (on a Kobo, for example,
+  `.adds/koreader/fonts` or `fonts` at the root of the device). Symbol fonts
+  and fonts without Latin letters are left out. A family without a bold file
+  is emboldened by KOReader; one without an italic file stays upright.
+- **Time style**: how the time is set off from the rest of the quote: bold
+  (default), bold italic, italic, or plain (useful with a colour).
+- **Time colour** (colour screens only): the text colour (default) or one of
+  eleven colours chosen to stay readable on colour e-ink.
+- **Alignment**: left (default), justified or centred. Justified lines that
+  would need very wide gaps (a long word in a narrow card) stay ragged.
+- **Line spacing**: normal (default), relaxed or loose.
 
 The settings are shared: a change on one home screen applies to the other.
 

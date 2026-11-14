@@ -165,50 +165,7 @@ end
 function M.getMenuItems(ctx_menu)
     local _lc = (ctx_menu and ctx_menu._) or _
     local refresh = ctx_menu and ctx_menu.refresh or function() end
-    local rows = {
-        {
-            text = _lc("Safe for work quotes only"),
-            checked_func = function() return Settings.get("sfw_only") end,
-            callback = function() Settings.toggle("sfw_only"); refresh() end,
-        },
-        {
-            text = _lc("Show title and author"),
-            checked_func = function() return Settings.get("show_attribution") end,
-            callback = function() Settings.toggle("show_attribution"); refresh() end,
-        },
-        {
-            text = _lc("Font size"),
-            sub_item_table = {
-                {
-                    text = _lc("Adaptive: fills the card"),
-                    radio = true,
-                    checked_func = function() return Settings.get("font_mode") ~= "fixed" end,
-                    callback = function() Settings.set("font_mode", "adaptive"); refresh() end,
-                },
-                {
-                    text_func = function()
-                        return string.format(_lc("Fixed: %d"),
-                            tonumber(Settings.get("font_size")) or Settings.FONT_SIZE_DEFAULT)
-                    end,
-                    radio = true,
-                    checked_func = function() return Settings.get("font_mode") == "fixed" end,
-                    callback = function() Settings.set("font_mode", "fixed"); refresh() end,
-                },
-                {
-                    text = _lc("Change fixed size…"),
-                    keep_menu_open = true,
-                    callback = function(touchmenu_instance)
-                        Core.SettingsUI.showFontSizeSpinner(function()
-                            refresh()
-                            if touchmenu_instance and touchmenu_instance.updateItems then
-                                touchmenu_instance:updateItems()
-                            end
-                        end)
-                    end,
-                },
-            },
-        },
-    }
+    local rows = Core.SettingsUI.menuItems(refresh, _lc)
     local pfx = ctx_menu and ctx_menu.pfx
     if Config and Config.makeScaleItem and Config.buildModuleMenu then
         local ok, menu = pcall(function()
