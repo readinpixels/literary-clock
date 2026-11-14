@@ -101,3 +101,11 @@ python3 tools/build_quotes.py path/to/quotes.en-US.csv literaryclock.koplugin/da
 ## Credits
 
 See [NOTICE.md](NOTICE.md) for where the quotes come from and their licence.
+
+## Licence
+
+The code is licensed under the
+[GNU Affero General Public License v3.0](LICENSE).
+The quotes in `literaryclock.koplugin/data/` are not covered by it: they are
+shared under the terms described in [NOTICE.md](NOTICE.md)
+(CC BY-NC-SA 2.5).
