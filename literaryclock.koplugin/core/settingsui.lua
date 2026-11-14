@@ -46,7 +46,17 @@ function SettingsUI.rows()
         { kind = "size", label = T("Font size"), value = sizeLabel },
         { kind = "list", key = "emphasis", label = T("Time style"), list = S.EMPHASES },
     }
-    if colourScreen() then
+    local colour = colourScreen()
+    if not colour then
+        -- "Plain" relies on the colour to set the time apart: not offered
+        -- on a greyscale screen.
+        local list = {}
+        for _i, e in ipairs(S.EMPHASES) do
+            if e.id ~= "none" then list[#list + 1] = e end
+        end
+        rows[#rows].list = list
+    end
+    if colour then
         rows[#rows + 1] = { kind = "list", key = "accent", label = T("Time colour"), list = S.ACCENTS }
     end
     rows[#rows + 1] = { kind = "list", key = "align", label = T("Alignment"), list = S.ALIGNMENTS }

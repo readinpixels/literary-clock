@@ -25,8 +25,13 @@ function Clock.style(ink_accent)
         align = Settings.choice("align", Settings.ALIGNMENTS).id,
         accent = ink_accent,
     }
+    local colour = colourScreen()
+    if not colour and style.emphasis == Layout.EMPHASIS.none then
+        -- Plain needs a colour to show; on a greyscale screen, bold.
+        style.emphasis = Layout.EMPHASIS.bold
+    end
     local accent = Settings.choice("accent", Settings.ACCENTS)
-    if accent.rgb and colourScreen() then
+    if accent.rgb and colour then
         local Blitbuffer = require("ffi/blitbuffer")
         style.accent = Blitbuffer.ColorRGB32(accent.rgb[1], accent.rgb[2], accent.rgb[3], 0xFF)
     end
