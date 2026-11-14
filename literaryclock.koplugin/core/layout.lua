@@ -19,17 +19,30 @@ local RenderText = require("ui/rendertext")
 local Widget     = require("ui/widget/widget")
 local bit        = require("bit")
 
+-- Token style bits: ITALIC is the source's own italics (<em>, a book
+-- title), BOLD marks the time phrase. How the time phrase is drawn (bold,
+-- italic, both or neither) is the "emphasis" option, applied when faces are
+-- picked, so the tokens never change.
 local ITALIC, BOLD = 1, 2
 
 local Layout = {}
 
--- Font files for each style bit combination. Noto Serif ships with KOReader
--- on every platform.
+-- Font files for each font style (italic = 1, bold = 2). Noto Serif ships
+-- with KOReader on every platform; core/fonts.lua builds other sets.
 Layout.FONTS = {
-    [0]               = "NotoSerif-Regular.ttf",
-    [ITALIC]          = "NotoSerif-Italic.ttf",
-    [BOLD]            = "NotoSerif-Bold.ttf",
-    [ITALIC + BOLD]   = "NotoSerif-BoldItalic.ttf",
+    [0] = "NotoSerif-Regular.ttf",
+    [1] = "NotoSerif-Italic.ttf",
+    [2] = "NotoSerif-Bold.ttf",
+    [3] = "NotoSerif-BoldItalic.ttf",
+    fake_bold = {},
+    key = "default",
+}
+
+Layout.EMPHASIS = {
+    bold       = { bold = true,  italic = false },
+    bolditalic = { bold = true,  italic = true },
+    italic     = { bold = false, italic = true },
+    none       = { bold = false, italic = false },
 }
 
 local ELLIPSIS = "…"
@@ -75,39 +88,64 @@ Layout.tokenize = tokenize
 -- ---------------------------------------------------------------------------
 
 local face_cache = {}
-local function getFaces(size)
-    local faces = face_cache[size]
-    if not faces then
-        faces = {}
-        for style, file in pairs(Layout.FONTS) do
-            faces[style] = Font:getFace(file, size) or Font:getFace("cfont", size)
+
+-- The faces for every token style at `size`, for font set `fonts`, the time
+-- phrase drawn per `emph`, lines spaced by `spacing` (1 = the font's own).
+-- faces[style] is the face, faces.bold[style] whether to embolden it
+-- synthetically (the family has no bold file).
+local function getFaces(size, fonts, emph, spacing)
+    fonts = fonts or Layout.FONTS
+    emph = emph or Layout.EMPHASIS.bold
+    spacing = spacing or 1
+    local key = table.concat({ size, fonts.key or "", emph.bold and "b" or "",
+        emph.italic and "i" or "", spacing }, "|")
+    local faces = face_cache[key]
+    if faces then return faces end
+    faces = { bold = {} }
+    for style = 0, 3 do
+        local italic = bit.band(style, ITALIC) ~= 0
+        local bold = false
+        if bit.band(style, BOLD) ~= 0 then
+            italic = italic or emph.italic
+            bold = emph.bold
         end
-        local h, asc = faces[0].ftsize:getHeightAndAscender()
-        faces.line_h = math.ceil(h)
-        faces.ascender = math.floor(asc + 0.5)
-        faces.space_w = RenderText:sizeUtf8Text(0, false, faces[0], " ", true).x
-        face_cache[size] = faces
+        local fstyle = (italic and 1 or 0) + (bold and 2 or 0)
+        local face = Font:getFace(fonts[fstyle], size)
+        local fake = fonts.fake_bold and fonts.fake_bold[fstyle] or false
+        if not face then
+            -- A font that FreeType cannot open: fall back to the default set.
+            face = Font:getFace(Layout.FONTS[fstyle], size) or Font:getFace("cfont", size)
+            fake = false
+        end
+        faces[style], faces.bold[style] = face, fake
     end
+    local h, asc = faces[0].ftsize:getHeightAndAscender()
+    faces.line_h = math.ceil(h * spacing)
+    faces.ascender = math.floor(asc + (faces.line_h - h) / 2 + 0.5)
+    faces.space_w = RenderText:sizeUtf8Text(0, false, faces[0], " ", true).x
+    face_cache[key] = faces
     return faces
 end
 
-local function textWidth(face, text)
-    return RenderText:sizeUtf8Text(0, false, face, text, true).x
+local function textWidth(face, text, bold)
+    return RenderText:sizeUtf8Text(0, false, face, text, true, bold).x
 end
 
---- Greedy word wrap. Returns lines ({ w, words = { {x, w, segs} } }) and
---- whether a single word was wider than the box.
+--- Greedy word wrap. Returns lines ({ w, words = { {x, w, segs} }, para_end })
+--- and whether a single word was wider than the box. para_end marks the last
+--- line of a paragraph, which justified text leaves ragged.
 local function wrap(items, faces, width)
     local lines, overflow = {}, false
     local cur = { w = 0, words = {} }
     for _i, it in ipairs(items) do
         if it.nl then
+            cur.para_end = true
             lines[#lines + 1] = cur
             cur = { w = 0, words = {} }
         else
             local ww, segs = 0, {}
             for _j, seg in ipairs(it.segs) do
-                local w = textWidth(faces[seg.style], seg.text)
+                local w = textWidth(faces[seg.style], seg.text, faces.bold[seg.style])
                 segs[#segs + 1] = { text = seg.text, style = seg.style, x = ww }
                 ww = ww + w
             end
@@ -122,6 +160,7 @@ local function wrap(items, faces, width)
             cur.w = cur.w + gap + ww
         end
     end
+    cur.para_end = true
     lines[#lines + 1] = cur
     return lines, overflow
 end
@@ -134,6 +173,7 @@ local function addEllipsis(line, faces, width)
         local last = line.words[#line.words]
         line.w = last.x + last.w
     end
+    line.para_end = true
     local last = line.words[#line.words]
     if last then
         last.segs[#last.segs + 1] = { text = ELLIPSIS, style = 0, x = last.w }
@@ -171,12 +211,12 @@ end
 
 -- RenderText:renderUtf8Text, but with colorblitFromRGB32 so a colour stays a
 -- colour on a colour screen (colorblitFrom turns it into a grey).
-local function renderColour(bb, x, baseline, face, text, color)
+local function renderColour(bb, x, baseline, face, text, color, bold)
     local pen_x, prev, i = 0, 0, 1
     while i <= #text do
         local cp
         cp, i = utf8At(text, i)
-        local glyph = RenderText:getGlyph(face, cp, false)
+        local glyph = RenderText:getGlyph(face, cp, bold)
         if prev ~= 0 then pen_x = pen_x + face.ftsize:getKerning(prev, cp) end
         bb:colorblitFromRGB32(glyph.bb, x + pen_x + glyph.l, baseline - glyph.t,
             0, 0, glyph.bb:getWidth(), glyph.bb:getHeight(), color)
@@ -199,10 +239,10 @@ function QuoteWidget:paintTo(bb, x, y)
     local colour_bb = bb.colorblitFromRGB32 and COLOUR_BB[bb:getType()]
     for _i, op in ipairs(self.ops) do
         if colour_bb and not Blitbuffer.isColor8(op.color) then
-            renderColour(bb, x + op.x, y + op.baseline, op.face, op.text, op.color)
+            renderColour(bb, x + op.x, y + op.baseline, op.face, op.text, op.color, op.bold)
         else
             RenderText:renderUtf8Text(bb, x + op.x, y + op.baseline, op.face, op.text,
-                true, false, op.color)
+                true, op.bold, op.color)
         end
     end
 end
@@ -222,7 +262,7 @@ end
 -- Lays everything out at quote font `size`. Returns a table with the lines,
 -- their metrics and the total height.
 local function layoutAt(p, size)
-    local qf = getFaces(size)
+    local qf = getFaces(size, p.fonts, p.emphasis, p.line_spacing)
     local lines, overflow = wrap(p._quote_items, qf, p.width)
     local res = {
         size = size, qf = qf, lines = lines, overflow = overflow,
@@ -231,7 +271,7 @@ local function layoutAt(p, size)
     res.h = res.quote_h
     if p._attr_items then
         local asize = math.max(p.min_attr_size or 9, math.floor(size * 0.6 + 0.5))
-        local af = getFaces(asize)
+        local af = getFaces(asize, p.fonts, nil, p.line_spacing)
         res.af = af
         res.attr_lines = wrap(p._attr_items, af, p.width)
         res.gap = math.floor(qf.line_h * 0.5)
@@ -258,13 +298,23 @@ local function emitLines(ops, lines, faces, top, width, align, colors)
         local lx = 0
         if align == "right" then lx = width - line.w
         elseif align == "center" then lx = math.floor((width - line.w) / 2) end
+        -- Justified: share the line's spare width between its word gaps,
+        -- except on the last line of a paragraph. A line that would need
+        -- gaps wider than about three spaces (a long word pushed to the next
+        -- line of a narrow card) stays ragged instead of opening rivers.
+        local extra = 0
+        if align == "justify" and not line.para_end and #line.words > 1 then
+            extra = math.max(0, width - line.w) / (#line.words - 1)
+            if extra > faces.space_w * 2 then extra = 0 end
+        end
         local baseline = top + (i - 1) * faces.line_h + faces.ascender
-        for _j, word in ipairs(line.words) do
+        for j, word in ipairs(line.words) do
+            local wx = lx + word.x + math.floor((j - 1) * extra + 0.5)
             for _k, seg in ipairs(word.segs) do
                 ops[#ops + 1] = {
-                    x = lx + word.x + seg.x, baseline = baseline,
-                    face = faces[seg.style], text = seg.text,
-                    color = colors(seg.style),
+                    x = wx + seg.x, baseline = baseline,
+                    face = faces[seg.style], bold = faces.bold[seg.style],
+                    text = seg.text, color = colors(seg.style),
                 }
             end
         end
@@ -297,7 +347,12 @@ end
 -- p.min_size, p.max_size            font size range searched to fill p.height
 -- p.show_attribution                default true
 -- p.fg, p.muted, p.accent           colours (accent: the time phrase)
--- p.align_attribution               "right" (default), "left" or "center"
+-- p.fonts                           font set from core/fonts.lua (default Noto Serif)
+-- p.emphasis                        how the time phrase is drawn: an entry of
+--                                   Layout.EMPHASIS (default bold)
+-- p.line_spacing                    1 = the font's own line height (default)
+-- p.align                           "left" (default), "center" or "justify"
+-- p.align_attribution               default "right", "center" when p.align is "center"
 -- Returns the widget and a table { size =, clamped = }.
 function Layout.build(p)
     prepare(p)
@@ -331,7 +386,8 @@ function Layout.build(p)
     end)
     if res.attr_lines then
         emitLines(ops, res.attr_lines, res.af, top + res.quote_h + res.gap, p.width,
-            p.align_attribution or "right", function() return muted end)
+            p.align_attribution or (p.align == "center" and "center" or "right"),
+            function() return muted end)
     end
     local widget = QuoteWidget:new{
         dimen = Geom:new{ x = 0, y = 0, w = p.width, h = box_h },
