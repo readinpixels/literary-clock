@@ -96,42 +96,27 @@ function SettingsUI.showFontSizeSpinner(on_done)
     })
 end
 
---- Full-screen list of the installed font families, paged. `on_done` runs
---- after a pick (not on cancel).
-function SettingsUI.showFontPicker(on_done)
-    local Menu      = require("ui/widget/menu")
-    local UIManager = require("ui/uimanager")
-    local Screen    = require("device").screen
+--- The font picker (core/fontpicker.lua). Every tap saves the family and
+--- calls `on_live`, so the card behind shows it at once; `on_done` runs when
+--- the picker closes.
+function SettingsUI.showFontPicker(on_done, on_live)
     local Settings, Fonts = Core.Settings, Core.Fonts
-
     Fonts.reset() -- pick up fonts added since the last look
-    local current = Settings.get("font_family") or Fonts.DEFAULT
-    local menu
-    local function item(label, family)
-        return {
-            text = (family == current and CHECK or BLANK) .. label,
-            callback = function()
-                Settings.set("font_family", family ~= Fonts.DEFAULT and family or nil)
-                UIManager:close(menu)
-                if on_done then on_done() end
-            end,
-        }
+    local families = Fonts.families()
+    -- The default first, then the rest in alphabetical order.
+    for i, f in ipairs(families) do
+        if f.name == Fonts.DEFAULT then table.remove(families, i); table.insert(families, 1, f); break end
     end
-    local items = { item(Fonts.DEFAULT .. " " .. T("(default)"), Fonts.DEFAULT) }
-    for _i, f in ipairs(Fonts.families()) do
-        if f.name ~= Fonts.DEFAULT then items[#items + 1] = item(f.name, f.name) end
-    end
-    menu = Menu:new{
-        title = T("Font"),
-        subtitle = T("Fonts you add to KOReader's fonts folder show here too."),
-        item_table = items,
-        width = Screen:getWidth(),
-        height = Screen:getHeight(),
-        covers_fullscreen = true,
-        is_borderless = true,
-        is_popout = false,
+    Core.FontPicker.show{
+        current = Settings.get("font_family") or Fonts.DEFAULT,
+        default = Fonts.DEFAULT,
+        families = families,
+        on_select = function(name)
+            Settings.set("font_family", name ~= Fonts.DEFAULT and name or nil)
+            if on_live then pcall(on_live) end
+        end,
+        on_done = on_done,
     }
-    UIManager:show(menu)
 end
 
 -- ---------------------------------------------------------------------------
@@ -189,7 +174,7 @@ function SettingsUI.showDialog(o)
             callback = function()
                 UIManager:close(dialog)
                 if row.kind == "font" then
-                    SettingsUI.showFontPicker(reopen)
+                    SettingsUI.showFontPicker(function() SettingsUI.showDialog(o) end, o.on_change)
                 elseif row.kind == "size" then
                     SettingsUI.showSizeDialog(reopen, o.decorate)
                 else
@@ -255,7 +240,9 @@ function SettingsUI.menuItems(on_change, translate)
             items[#items + 1] = {
                 text_func = function() return row.label .. ": " .. row.value() end,
                 keep_menu_open = true,
-                callback = function(tm) SettingsUI.showFontPicker(function() changed(tm) end) end,
+                callback = function(tm)
+                    SettingsUI.showFontPicker(function() changed(tm) end, on_change)
+                end,
             }
         elseif row.kind == "size" then
             items[#items + 1] = {
